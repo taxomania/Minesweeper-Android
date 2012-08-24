@@ -18,19 +18,80 @@ class Game {
     private final Cell[][] grid = new Cell[16][16];
     boolean player1Turn = true;
 
-    private void calcEdgeMines(int a, int b, int c, int d, int e, int f, int g, int h) {
+    private int calcIAdjacent(final int i, final int j) {
+        int count = 0;
+        if (grid[i][j - 1].isMine) {
+            count++;
+        } // if
+        if (grid[i][j + 1].isMine) {
+            count++;
+        } // if
+        return count;
+    } // calcIAdjacent(int, int)
+
+    private int calcJAdjacent(final int i, final int j) {
+        int count = 0;
+        if (grid[i - 1][j].isMine) {
+            count++;
+        } // if
+        if (grid[i + 1][j].isMine) {
+            count++;
+        } // if
+        return count;
+    } // calcJAdjacent(int, int)
+
+    private void calcColMines(final int j, final int adj) {
+        for (int i = 1; i < 15; i++) {
+            int count = 0;
+            count += calcJAdjacent(i, j);
+            count += calcJAdjacent(i, adj);
+            if (grid[i][adj].isMine) {
+                count++;
+            } // if
+            grid[i][j].noSurroundingMines = count;
+        } // for
+    } // calcColMines(int, int)
+
+    private void calcRowMines(final int i, final int adj) {
+        for (int j = 1; j < 15; j++) {
+            int count = 0;
+            count += calcIAdjacent(i, j);
+            count += calcIAdjacent(adj, j);
+            if (grid[adj][j].isMine) {
+                count++;
+            } // if
+            grid[i][j].noSurroundingMines = count;
+        } // for
+    } // calcRowMines(int, int)
+
+    private void calcCornerMines(final int i, final int j, final int a, final int b) {
         int mines = 0;
+        if (grid[i][b].isMine) {
+            mines++;
+        } // if
         if (grid[a][b].isMine) {
             mines++;
-        }
-        if (grid[c][d].isMine) {
+        } // if
+        if (grid[a][j].isMine) {
             mines++;
-        }
-        if (grid[e][f].isMine) {
-            mines++;
-        }
-        grid[g][h].noSurroundingMines = mines;
-    }
+        } // if
+        grid[i][j].noSurroundingMines = mines;
+    } // calcCornerMines(int, int, int, int)
+
+    void calcTopCornerMines(final int j, final int b) {
+        calcCornerMines(0, j, 1, b);
+    } // calcTopCornerMines(int, int)
+
+    private void calcBottomCornerMines(final int j, final int b) {
+        calcCornerMines(15, j, 14, b);
+    } // calcBottomCornerMines(int, int)
+
+    private void calcMines(final int pos, final int adj) {
+        calcTopCornerMines(adj, pos);
+        calcBottomCornerMines(adj, pos);
+        calcRowMines(pos, adj);
+        calcColMines(pos, adj);
+    } // calcMines(int, int)
 
     Game() {
         for (int i = 0; i < grid.length; i++) {
@@ -50,120 +111,17 @@ class Game {
         } // for
 
         // corners
-        calcEdgeMines(0, 1, 1, 0, 1, 1, 0, 0);
-        calcEdgeMines(0, 14, 1, 14, 1, 15, 0, 15);
-        calcEdgeMines(14, 0, 14, 1, 15, 1, 15, 0);
-        calcEdgeMines(14, 14, 14, 15, 15, 14, 15, 15);
-
-        // edges
-        for (int j = 1; j < 15; j++) {
-            int count = 0;
-            if (grid[0][j - 1].isMine) {
-                count++;
-            }
-            if (grid[0][j + 1].isMine) {
-                count++;
-            }
-            if (grid[1][j - 1].isMine) {
-                count++;
-            }
-            if (grid[1][j].isMine) {
-                count++;
-            }
-            if (grid[1][j + 1].isMine) {
-                count++;
-            }
-            grid[0][j].noSurroundingMines = count;
-        }
-
-        for (int j = 1; j < 15; j++) {
-            int count = 0;
-            if (grid[14][j - 1].isMine) {
-                count++;
-            }
-            if (grid[14][j].isMine) {
-                count++;
-            }
-            if (grid[14][j + 1].isMine) {
-                count++;
-            }
-            if (grid[15][j - 1].isMine) {
-                count++;
-            }
-            if (grid[15][j + 1].isMine) {
-                count++;
-            }
-            grid[15][j].noSurroundingMines = count;
-        }
-
-        for (int i = 1; i < 15; i++) {
-            int count = 0;
-            if (grid[i - 1][0].isMine) {
-                count++;
-            }
-            if (grid[i + 1][0].isMine) {
-                count++;
-            }
-            if (grid[i - 1][1].isMine) {
-                count++;
-            }
-            if (grid[i][1].isMine) {
-                count++;
-            }
-            if (grid[i + 1][1].isMine) {
-                count++;
-            }
-            grid[i][0].noSurroundingMines = count;
-        }
-
-        for (int i = 1; i < 15; i++) {
-            int count = 0;
-            if (grid[i - 1][14].isMine) {
-                count++;
-            }
-            if (grid[i][14].isMine) {
-                count++;
-            }
-            if (grid[i + 1][14].isMine) {
-                count++;
-            }
-            if (grid[i - 1][15].isMine) {
-                count++;
-            }
-            if (grid[i + 1][15].isMine) {
-                count++;
-            }
-            grid[i][15].noSurroundingMines = count;
-        }
+        calcMines(0, 1);
+        calcMines(15, 14);
 
         // middle
         for (int i = 1; i < 15; i++) {
             for (int j = 1; j < 15; j++) {
                 int count = 0;
-                if (grid[i - 1][j - 1].isMine) {
-                    count++;
-                }
-                if (grid[i - 1][j].isMine) {
-                    count++;
-                }
-                if (grid[i - 1][j + 1].isMine) {
-                    count++;
-                }
-                if (grid[i][j - 1].isMine) {
-                    count++;
-                }
-                if (grid[i][j + 1].isMine) {
-                    count++;
-                }
-                if (grid[i + 1][j - 1].isMine) {
-                    count++;
-                }
-                if (grid[i + 1][j].isMine) {
-                    count++;
-                }
-                if (grid[i + 1][j + 1].isMine) {
-                    count++;
-                }
+                count += calcIAdjacent(i, j);
+                count += calcJAdjacent(i, j);
+                count += calcIAdjacent(i - 1, j);
+                count += calcIAdjacent(i + 1, j);
                 grid[i][j].noSurroundingMines = count;
             } // for
         } // for
